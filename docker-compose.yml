@@ -1,0 +1,25 @@
+services:
+  zlmediakit:
+    image: zlmediakit/zlmediakit:master
+    container_name: zlm_${MEDIA_SERVER_ID:-node}
+    restart: always
+    # network_mode: host # Bật dòng này nếu muốn dùng Host Network trực tiếp trên Linux (khi bật host mode thì phần ports bên dưới sẽ tự bỏ qua)
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}/tcp"
+      - "${RTSP_PORT:-554}:${RTSP_PORT:-554}/tcp"
+      - "${RTSP_PORT:-554}:${RTSP_PORT:-554}/udp"
+      - "${RTMP_PORT:-1935}:${RTMP_PORT:-1935}/tcp"
+      - "${RTP_PORT:-10000}:${RTP_PORT:-10000}/tcp"
+      - "${RTP_PORT:-10000}:${RTP_PORT:-10000}/udp"
+      - "${RTC_PORT:-8000}:${RTC_PORT:-8000}/tcp"
+      - "${RTC_PORT:-8000}:${RTC_PORT:-8000}/udp"
+      - "${SRT_PORT:-9000}:${SRT_PORT:-9000}/udp"
+      - "${RTP_PORT_RANGE:-30000-30500}:${RTP_PORT_RANGE:-30000-30500}/udp"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./conf/config.ini:/conf/config.ini
+      - ${VIDEO_STORAGE_PATH:-/data/video}:/opt/media/bin/www/record/
+      - ${LOG_STORAGE_PATH:-/data/logs}:/opt/media/log/
+    command: ["MediaServer", "-c", "/conf/config.ini", "-l", "0"]
+
