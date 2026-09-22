@@ -1,97 +1,91 @@
-# 🎥 ZLMediaKit Standalone Node (Host Network Mode)
+# HƯỚNG DẪN TRIỂN KHAI ZLMEDIKIT WORKER NODE (CLUSTER JOIN TOKEN)
 
-Kho lưu trữ (Repo) độc lập này dùng để triển khai nhanh một **ZLMediaKit Media Node** trên bất kỳ máy chủ / VPS / VM nào bằng chế độ mạng trực tiếp **`--net=host`**, tự động đồng bộ cấu hình `config.ini` và kết nối về **WVP Master Server**.
+Thư mục này chứa toàn bộ cấu hình để triển khai **ZLMediaKit ở chế độ phân tán (Standalone Worker Node)** theo chuẩn **Cluster Join Token** (tương tự cơ chế `kubeadm join --token` của Kubernetes).
+
+### 🛡️ ƯU ĐIỂM BẢO MẬT VƯỢT TRỘI:
+1. **Hoàn toàn KHÔNG lộ Username / Password Quản trị viên**: File `.env` và máy chủ Worker tuyệt đối không chứa thông tin đăng nhập của WVP Master.
+2. **Bảo mật chia vùng (Partitioned Security)**: Mỗi Node Worker sở hữu một `NODE_SECRET` độc lập cho riêng mình.
+3. **Zero-touch Auto Enrollment**: Khi ZLMediaKit khởi động, nó tự động gửi thông tin gia nhập kèm mã Token. WVP Master tự phê duyệt và chuyển node sang **🟢 ONLINE** ngay lập tức mà không cần chạy bất kỳ script phụ nào.
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 🏗️ KIẾN TRÚC HOẠT ĐỘNG
 
-```text
-zlm-node-standalone/
-├── .env.example         # File mẫu cấu hình môi trường
-├── .env                 # File cấu hình của Node này
-├── config.template.ini  # Template cấu hình ZLMediaKit
-├── docker-compose.yml   # Docker Compose chạy chế độ Host Network
-├── deploy.sh            # Script 1-click tự sinh config và chạy Node
-└── README.md            # Hướng dẫn sử dụng
+```
+     [ ZLMediaKit Worker Node ]                     [ WVP Master Control Plane ]
+                 │                                               │
+(1) Khởi động container ZLMediaKit                               │
+                 │                                               │
+(2) Gửi Webhook on_server_started?secret=<CLUSTER_JOIN_TOKEN>   │
+    Kèm thông tin: NODE_ID, NODE_SECRET, sdp_ip, stream_ip...    │
+                 ───────────────────────────────────────────────>│
+                                                                 │
+                                                    (3) Kiểm tra CLUSTER_JOIN_TOKEN:
+                                                        - Nếu đúng: Tự động lưu Node
+                                                          vào CSDL & Cache
+                                                        - Kích hoạt trạng thái ONLINE!
+                 │<──────────────────────────────────────────────│
+                 │
+(4) Nhịp tim keepalive & sẵn sàng nhận luồng Camera!
 ```
 
+## 🔑 HỖ TRỢ MULTI CLUSTER_JOIN_TOKEN (PHÂN TÁCH VÙNG & XOAY VÒNG TOKEN)
+
+Hệ thống hỗ trợ cấu hình **Nhiều Token Gia Nhập (Multi-Token)** cùng lúc trên WVP Master, phân tách bằng dấu phẩy `,`:
+```yaml
+# Cấu hình trên WVP Master (biến môi trường MEDIA_SECRET):
+MEDIA_SECRET: "token_north_2026,token_south_2026,token_danang_2026,token_edge_backup"
+```
+
+* **Lợi ích 1: Phân tách quyền từng vùng:**
+  * Node Miền Bắc dùng: `CLUSTER_JOIN_TOKEN=token_north_2026`
+  * Node Miền Nam dùng: `CLUSTER_JOIN_TOKEN=token_south_2026`
+  * Nếu Node Miền Bắc bị lộ token, anh chỉ cần xóa `token_north_2026` trên Master mà **không làm ảnh hưởng đến các Node Miền Nam**.
+* **Lợi ích 2: Xoay vòng Token không gián đoạn (Zero-Downtime Rotation):**
+  * Thêm Token mới vào danh sách trên Master (`token_cu,token_moi`).
+  * Cập nhật các Node sang Token mới rồi xóa Token cũ đi mà hệ thống không bao giờ phải dừng.
+
 ---
 
-## 🚀 Hướng dẫn cài đặt trên Server mới (Chỉ mất 1 phút)
+## 🚀 CÁC BƯỚC TRIỂN KHAI WORKER NODE MỚI
 
-### Bước 1: Copy / Git clone thư mục này về Server mới
+### Bước 1: Copy thư mục `zlm-node-standalone` sang máy chủ Worker
+Copy toàn bộ thư mục này sang máy chủ bạn muốn làm Media Node.
+
+### Bước 2: Cấu hình thông số Node trong `.env`
+Tạo file `.env` từ file mẫu:
 ```bash
-git clone <URL_REPO_CUA_BAN> zlm-node
-cd zlm-node
+cp .env.example .env
 ```
 
----
+Mở file `.env` và điền thông số của vùng đó:
+```ini
+# 1. Trỏ về WVP Master
+WVP_MASTER_HOST=192.168.1.100
+WVP_MASTER_PORT=18978
 
-### Bước 2: Chỉnh sửa thông số trong file `.env`
-Mở file `.env`:
+# Token gia nhập cụm (Phải khớp với "media.secret" trên WVP Master)
+CLUSTER_JOIN_TOKEN=wvp_cluster_join_secret_key_2026
+
+# 2. Định danh và Secret riêng biệt của Node này (Bảo mật chia vùng)
+NODE_ID=zlm_north_01
+NODE_SECRET=secret_rieng_mien_bac_9988
+
+# 3. Địa chỉ IP máy chủ này
+NODE_IP=192.168.1.101          # IP nội bộ kết nối Master
+NODE_SDP_IP=27.71.24.106        # IP để Camera nhìn thấy và bắn RTP vào
+NODE_STREAM_IP=27.71.24.106     # IP để Client Web/App kết nối vào xem
+```
+
+### Bước 3: Khởi động 1-Click
+Chạy lệnh khởi động:
 ```bash
-nano .env
+./start.sh
 ```
-Điền các thông số cơ bản:
-```properties
-# 1. Tên định danh cho Node này (bắt buộc duy nhất, ví dụ: zlm_node_02, zlm_node_03,...)
-MEDIA_SERVER_ID=zlm_node_02
-
-# 2. Khóa Secret API (khớp với secret hệ thống WVP)
-SECRET=su6TiedN2rVAmBbIDX0aa0QTiBJLBdcf
-
-# 3. IP và Cổng của máy chủ WVP Master (để Node gửi webhook báo sự kiện về WVP)
-WVP_HOST=192.168.100.1
-WVP_PORT=18978
-
-# 4. Thư mục lưu trữ video trên máy chủ này
-VIDEO_STORAGE_PATH=/data/video
-```
+*(Hoặc: `bash generate-config.sh && docker compose up -d`)*
 
 ---
 
-### Bước 3: Chạy script triển khai tự động
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-Script sẽ:
-1. Đọc file `.env`.
-2. Tự động sinh file `conf/config.ini` chuẩn xác với các đường dẫn Webhook trỏ về WVP Master.
-3. Tạo thư mục lưu video `/data/video`.
-4. Khởi chạy container ZLMediaKit với `--net=host`.
-
----
-
-### Bước 4: Khai báo Node lên giao diện Web WVP Master
-
-1. Truy cập Web WVP Master: `http://<IP_WVP_MASTER>:8080/#/mediaServer`.
-2. Vào **Media node** $\rightarrow$ Bấm **Add node**.
-3. Điền thông tin:
-   - **IP**: Địa chỉ IP của Server mới này.
-   - **HTTP port**: `80` (hoặc port bạn cấu hình trong `.env`).
-   - **SECRET**: Khóa `SECRET` trong `.env`.
-   - **Type**: `ZLMediaKit`.
-4. Bấm **Test** $\rightarrow$ Hiện dấu tích xanh ✅ $\rightarrow$ Bấm **Next step** $\rightarrow$ Bấm **Save**.
-
-Node mới sẽ ngay lập tức chuyển sang trạng thái **`Online`**!
-
----
-
-## 🛠️ Các lệnh quản lý
-
-* **Xem log hoạt động:**
-  ```bash
-  docker logs -f zlm_zlm_node_02
-  ```
-* **Khởi động lại Node:**
-  ```bash
-  ./deploy.sh
-  ```
-* **Dừng Node:**
-  ```bash
-  docker compose down
-  ```
-# zlm-node
+## 🎯 KẾT QUẢ:
+* Ngay sau khi container ZLMediaKit chạy, đăng nhập vào trang Web WVP Master (`http://<IP_WVP>:18978`) ➔ Menu **`Quản lý Node (Node Management)`**.
+* Node `zlm_north_01` sẽ tự động hiển thị với trạng thái **🟢 ONLINE** kèm đầy đủ địa chỉ IP và Secret độc lập của riêng node đó!

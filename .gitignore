@@ -1,0 +1,25 @@
+# ==============================================================================
+# Git Ignore for ZLMediaKit Standalone Worker Node
+# ==============================================================================
+
+# 1. BẢO MẬT: Tuyệt đối không commit file chứa Secret và Token lên Git
+.env
+.env.local
+.env.*.local
+
+# 2. File cấu hình được sinh tự động từ template
+config.ini
+
+# 3. Dữ liệu video ghi hình & Log vận hành
+volumes/
+record/
+logs/
+*.log
+
+# 4. Tệp tin hệ thống & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
