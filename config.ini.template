@@ -3,7 +3,7 @@
 ; ==============================================================================
 
 [api]
-apiDebug=1
+apiDebug=0
 defaultSnap=./www/logo.png
 downloadRoot=./www;
 secret=${NODE_SECRET}
@@ -80,7 +80,7 @@ timeoutSec=30
 allow_cross_domains=1
 allow_ip_range=
 charSet=utf-8
-dirMenu=1
+dirMenu=0
 forbidCacheSuffix=
 forwarded_ip_header=
 keepAliveSecond=30

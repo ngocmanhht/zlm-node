@@ -60,19 +60,9 @@ if [ $RETRY_COUNT -eq $MAX_RETRY ]; then
 fi
 echo "   ✅ WVP Master đã sẵn sàng phản hồi!"
 
-# 2. Đăng nhập WVP Master để lấy Access Token JWT (MD5 password)
+# 2. Đăng nhập WVP Master để lấy Access Token JWT
 echo ">> [2/3] Đang xác thực tài khoản quản trị viên trên WVP Master..."
-# Tính MD5 của mật khẩu (hỗ trợ cả md5 trên Mac và md5sum trên Linux)
-if command -v md5 >/dev/null 2>&1; then
-    PASS_MD5=$(echo -n "${WVP_ADMIN_PASS}" | md5)
-elif command -v md5sum >/dev/null 2>&1; then
-    PASS_MD5=$(echo -n "${WVP_ADMIN_PASS}" | md5sum | awk '{print $1}')
-else
-    # Fallback dùng python
-    PASS_MD5=$(python3 -c "import hashlib; print(hashlib.md5(b'${WVP_ADMIN_PASS}').hexdigest())")
-fi
-
-LOGIN_RESP=$(curl -s -X POST "http://${WVP_MASTER_HOST}:${WVP_MASTER_PORT}/api/user/login?username=${WVP_ADMIN_USER}&password=${PASS_MD5}")
+LOGIN_RESP=$(curl -s -X POST "http://${WVP_MASTER_HOST}:${WVP_MASTER_PORT}/api/user/login?username=${WVP_ADMIN_USER}&password=${WVP_ADMIN_PASS}")
 ACCESS_TOKEN=$(echo "$LOGIN_RESP" | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4 || echo "")
 
 if [ -z "$ACCESS_TOKEN" ]; then

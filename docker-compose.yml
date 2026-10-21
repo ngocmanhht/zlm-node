@@ -4,9 +4,18 @@ services:
   # ZLMediaKit Standalone Worker Node
   # Tự động kết nối & đăng ký vào WVP Master thông qua Cluster Join Token
   zlm-worker:
-    image: zlmediakit/zlmediakit:master
+    image: ${ZLM_IMAGE:-zlmediakit/zlmediakit:master}
     container_name: ${NODE_ID:-zlm_node_01}
     restart: always
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
     ports:
       - "${ZLM_HTTP_PORT:-80}:80/tcp"
       - "${ZLM_RTMP_PORT:-1935}:1935/tcp"
@@ -19,8 +28,8 @@ services:
       - "8000:8000/tcp"                                   # WebRTC TCP
       - "30000-30500:30000-30500/udp"                     # GB28181 RTP Port Range UDP
       - "30000-30500:30000-30500/tcp"                     # GB28181 RTP Port Range TCP
-    # Lưu ý: Trên Linux Production hiệu năng cao, bạn có thể comment mục `ports:` ở trên
-    # và bỏ comment dòng `network_mode: host` dưới đây để có hiệu năng tốt nhất:
+    # Lưu ý: Trên Linux Production hiệu năng cao, comment mục `ports:` ở trên
+    # và bỏ comment dòng `network_mode: host` dưới đây để có hiệu năng tốt nhất (tránh nghẽn docker-proxy):
     # network_mode: "host"
     volumes:
       - ./config.ini:/conf/config.ini
