@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # ZLMediaKit Standalone Worker Node
   # Tự động kết nối & đăng ký vào WVP Master thông qua Cluster Join Token
