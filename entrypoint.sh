@@ -24,16 +24,7 @@ WVP_MASTER_HOST="${WVP_MASTER_HOST:-192.168.1.100}"
 WVP_MASTER_PORT="${WVP_MASTER_PORT:-18978}"
 
 echo ">> [1/2] Đang tạo file config.ini từ template..."
-sed -e "s|\${NODE_SECRET}|${NODE_SECRET}|g" \
-    -e "s|\${NODE_ID}|${NODE_ID}|g" \
-    -e "s|\${ZLM_HTTP_PORT}|${ZLM_HTTP_PORT}|g" \
-    -e "s|\${ZLM_RTSP_PORT}|${ZLM_RTSP_PORT}|g" \
-    -e "s|\${ZLM_RTMP_PORT}|${ZLM_RTMP_PORT}|g" \
-    -e "s|\${ZLM_RTP_PORT}|${ZLM_RTP_PORT}|g" \
-    -e "s|\${ZLM_RTP_PORT_RANGE}|${ZLM_RTP_PORT_RANGE}|g" \
-    -e "s|\${WVP_MASTER_HOST}|${WVP_MASTER_HOST}|g" \
-    -e "s|\${WVP_MASTER_PORT}|${WVP_MASTER_PORT}|g" \
-    "${SCRIPT_DIR}/config.ini.template" > "${SCRIPT_DIR}/config.ini"
+bash "${SCRIPT_DIR}/generate-config.sh"
 
 echo ">> [2/2] Chạy tiến trình tự động đăng ký trong nền..."
 (

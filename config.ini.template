@@ -53,7 +53,7 @@ segRetain=5
 alive_interval=10.0
 enable=1
 ; Gửi kèm Cluster Join Token và cấu hình mạng ngoại vi để WVP Master tự động nhận diện
-admin_params=secret=${CLUSTER_JOIN_TOKEN}&node_ip=${NODE_IP}&sdp_ip=${NODE_SDP_IP}&stream_ip=${NODE_STREAM_IP}
+admin_params=secret=${CLUSTER_JOIN_TOKEN}&node_ip=${NODE_IP}&sdp_ip=${NODE_SDP_IP}&stream_ip=${NODE_STREAM_IP}&http_port=${ZLM_HTTP_PORT}
 on_flow_report=
 on_http_access=
 on_play=http://${WVP_MASTER_HOST}:${WVP_MASTER_PORT}/index/hook/on_play
@@ -112,7 +112,7 @@ fmp4_demand=0
 hls_demand=0
 hls_save_path=./www
 mp4_as_player=0
-mp4_max_second=3600
+mp4_max_second=${ZLM_MP4_MAX_SECOND}
 mp4_save_path=./www
 paced_sender_ms=0
 rtmp_demand=0
@@ -149,7 +149,7 @@ ps_pt=96
 timeoutSec=15
 
 [rtc]
-externIP=
+externIP=${NODE_STREAM_IP}
 port=8000
 preferredCodecA=PCMU,PCMA,opus
 preferredCodecV=H264,H265

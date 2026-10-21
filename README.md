@@ -49,7 +49,7 @@ MEDIA_SECRET: "token_north_2026,token_south_2026,token_danang_2026,token_edge_ba
 
 ## 🚀 CÁC BƯỚC TRIỂN KHAI WORKER NODE MỚI
 
-### Bước 1: Copy thư mục `zlm-node-standalone` sang máy chủ Worker
+### Bước 1: Copy thư mục `zlm-node` sang máy chủ Worker
 Copy toàn bộ thư mục này sang máy chủ bạn muốn làm Media Node.
 
 ### Bước 2: Cấu hình thông số Node trong `.env`
@@ -73,8 +73,8 @@ NODE_SECRET=secret_rieng_mien_bac_9988
 
 # 3. Địa chỉ IP máy chủ này
 NODE_IP=192.168.1.101          # IP nội bộ kết nối Master
-NODE_SDP_IP=27.71.24.106        # IP để Camera nhìn thấy và bắn RTP vào
-NODE_STREAM_IP=27.71.24.106     # IP để Client Web/App kết nối vào xem
+NODE_SDP_IP=192.168.1.101       # IP để Camera nhìn thấy và bắn RTP vào (hoặc WAN IP)
+NODE_STREAM_IP=192.168.1.101    # IP để Client Web/App kết nối vào xem (hoặc WAN IP)
 ```
 
 ### Bước 3: Khởi động 1-Click
@@ -89,3 +89,26 @@ Chạy lệnh khởi động:
 ## 🎯 KẾT QUẢ:
 * Ngay sau khi container ZLMediaKit chạy, đăng nhập vào trang Web WVP Master (`http://<IP_WVP>:18978`) ➔ Menu **`Quản lý Node (Node Management)`**.
 * Node `zlm_north_01` sẽ tự động hiển thị với trạng thái **🟢 ONLINE** kèm đầy đủ địa chỉ IP và Secret độc lập của riêng node đó!
+
+---
+
+## 🗜️ TỐI ƯU HÓA DUNG LƯỢNG LƯU TRỮ (REDUCE STORAGE)
+ZLMediaKit mặc định đóng gói trực tiếp luồng RTP thành MP4 (không transcode on-the-fly để bảo toàn CPU). Để giảm dung lượng lưu trữ:
+
+### 1. Tự động nén & Resize MP4 Offline (`compress-records.sh`):
+Chạy script nén các file MP4 đã ghi bằng FFmpeg (chuẩn H.265/HEVC, resize về tối đa 720p):
+```bash
+./compress-records.sh
+```
+*Tùy chọn lập lịch chạy tự động ban đêm (Cronjob):*
+```bash
+# Chạy lúc 2h sáng mỗi ngày
+0 2 * * * cd /path/to/zlm-node && ./compress-records.sh >> /var/log/zlm_compress.log 2>&1
+```
+
+### 2. Tự động xóa file cũ theo số ngày (`RECORD_DAY`):
+Cấu hình trong `.env`:
+```ini
+RECORD_DAY=7   # Tự động xóa các video cũ hơn 7 ngày (WVP Master chạy dọn dẹp lúc 0h)
+```
+

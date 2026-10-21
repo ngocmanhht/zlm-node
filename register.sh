@@ -32,6 +32,8 @@ ZLM_RTSP_PORT="${ZLM_RTSP_PORT:-554}"
 ZLM_RTMP_PORT="${ZLM_RTMP_PORT:-1935}"
 ZLM_RTP_PORT="${ZLM_RTP_PORT:-10000}"
 ZLM_RTP_PORT_RANGE="${ZLM_RTP_PORT_RANGE:-30000,30500}"
+ZLM_RTP_PORT_RANGE_COMMA="${ZLM_RTP_PORT_RANGE//-/,}"
+RECORD_DAY="${RECORD_DAY:-7}"
 
 echo "========================================================================"
 echo "  🚀 BẮT ĐẦU TỰ ĐỘNG ĐĂNG KÝ ZLMEDIKIT NODE VỀ WVP MASTER"
@@ -98,9 +100,10 @@ REGISTER_PAYLOAD=$(cat <<EOF
   "rtspPort": ${ZLM_RTSP_PORT},
   "rtspSSLPort": 0,
   "rtpProxyPort": ${ZLM_RTP_PORT},
-  "rtpPortRange": "${ZLM_RTP_PORT_RANGE}",
+  "rtpPortRange": "${ZLM_RTP_PORT_RANGE_COMMA}",
   "rtpEnable": true,
   "secret": "${NODE_SECRET}",
+  "recordDay": ${RECORD_DAY},
   "autoConfig": false,
   "type": "zlm"
 }

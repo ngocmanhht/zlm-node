@@ -15,7 +15,13 @@ services:
       - "${ZLM_RTSP_PORT:-554}:554/udp"
       - "${ZLM_RTP_PORT:-10000}:10000/tcp"
       - "${ZLM_RTP_PORT:-10000}:10000/udp"
-      - "30000-30050:30000-30050/udp"
+      - "8000:8000/udp"                                   # WebRTC UDP
+      - "8000:8000/tcp"                                   # WebRTC TCP
+      - "30000-30500:30000-30500/udp"                     # GB28181 RTP Port Range UDP
+      - "30000-30500:30000-30500/tcp"                     # GB28181 RTP Port Range TCP
+    # Lưu ý: Trên Linux Production hiệu năng cao, bạn có thể comment mục `ports:` ở trên
+    # và bỏ comment dòng `network_mode: host` dưới đây để có hiệu năng tốt nhất:
+    # network_mode: "host"
     volumes:
       - ./config.ini:/conf/config.ini
       - ./volumes/record:/opt/media/bin/www/record/
