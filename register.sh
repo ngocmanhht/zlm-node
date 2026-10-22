@@ -62,7 +62,9 @@ echo "   ✅ WVP Master đã sẵn sàng phản hồi!"
 
 # 2. Đăng nhập WVP Master để lấy Access Token JWT
 echo ">> [2/3] Đang xác thực tài khoản quản trị viên trên WVP Master..."
-LOGIN_RESP=$(curl -s -X POST "http://${WVP_MASTER_HOST}:${WVP_MASTER_PORT}/api/user/login?username=${WVP_ADMIN_USER}&password=${WVP_ADMIN_PASS}")
+LOGIN_RESP=$(curl -s -X POST "http://${WVP_MASTER_HOST}:${WVP_MASTER_PORT}/api/user/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"username\": \"${WVP_ADMIN_USER}\", \"password\": \"${WVP_ADMIN_PASS}\"}")
 ACCESS_TOKEN=$(echo "$LOGIN_RESP" | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4 || echo "")
 
 if [ -z "$ACCESS_TOKEN" ]; then
